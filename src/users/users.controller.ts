@@ -1,14 +1,17 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Post,
   Put,
   Query,
   Req,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UsersService } from './users.service';
@@ -24,9 +27,14 @@ export class UsersController {
     return this.usersService.create(body.email, body.password);
   }
 
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get('/:id')
-  findUser(@Req() req: Request) {
-    return this.usersService.findOne(req.params.id);
+  async findUser(@Req() req: Request) {
+    const user = await this.usersService.findOne(req.params.id);
+    if (!user) {
+      throw new NotFoundException('User is not found');
+    }
+    return user;
   }
 
   @Get('')
