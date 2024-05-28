@@ -19,6 +19,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
 import { UsersService } from './users.service';
 import { AuthService } from './auth.service';
+import { currentUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
 export class UsersController {
@@ -27,14 +28,14 @@ export class UsersController {
     private authService: AuthService,
   ) {}
 
-  @Get('/colors/:color')
-  setColor(@Param('color') color: string, @Session() session: any) {
-    session.color = color;
+  @Get('/find-person')
+  findPerson(@currentUser() user: string) {
+    return user;
   }
 
-  @Get('/colors')
-  getColor(@Session() session: any) {
-    return session.color;
+  @Post('/signout')
+  signout(@Session() session: any) {
+    session.userId = null;
   }
 
   @Post('/signup')
