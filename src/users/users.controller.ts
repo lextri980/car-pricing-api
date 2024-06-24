@@ -11,6 +11,8 @@ import {
   Req,
   Res,
   Session,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Serialize } from 'src/interceptors/serialize.interceptor';
@@ -19,17 +21,28 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
 import { UsersService } from './users.service';
 import { AuthService } from './auth.service';
-import { currentUser } from './decorators/current-user.decorator';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { CurrentUserInterceptor } from './interceptors/curent-user.interceptor';
+import { User } from './users.entity';
+import { AuthGuard } from 'src/guards/auth.guard';
 
 @Controller('auth')
+@Serialize(UserDto)
+@UseInterceptors(CurrentUserInterceptor)
 export class UsersController {
   constructor(
     private usersService: UsersService,
     private authService: AuthService,
   ) {}
 
+  @Get('/test')
+  @UseGuards(AuthGuard)
+  testFunc(@CurrentUser() user: User) {
+    return user;
+  }
+
   @Get('/find-person')
-  findPerson(@currentUser() user: string) {
+  findPerson(@CurrentUser() user: string) {
     return user;
   }
 
@@ -48,11 +61,11 @@ export class UsersController {
   @Post('/signin')
   async signin(@Body() body: CreateUserDto, @Session() session: any) {
     const user = await this.authService.signin(body.email, body.password);
+    console.log(user);
     session.userId = user.id;
     return user;
   }
 
-  @Serialize(UserDto)
   @Get('/:id')
   async findUser(@Req() req: Request) {
     console.log('handler is runnings');
