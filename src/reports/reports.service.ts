@@ -1,16 +1,35 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Report } from './reports.entity';
+import { User } from 'src/users/users.entity';
 import { Repository } from 'typeorm';
 import { CreateReportDto } from './dtos/create-report.dto';
-import { User } from 'src/users/users.entity';
+import { GetEstimateDto } from './dtos/get-estimate.dto';
+import { Report } from './reports.entity';
+import { Request } from 'express';
 
 @Injectable()
 export class ReportsService {
   constructor(@InjectRepository(Report) private repo: Repository<Report>) {}
 
-  getList() {
-    return this.repo.find();
+  async getReportList(query: GetEstimateDto) {
+    return this.repo
+      .createQueryBuilder()
+      .select('*')
+      .where(`make = :make`, {
+        make: query.make,
+      })
+      .getRawMany();
+  }
+
+  async getReportListNoQuery(req?: Request) {
+    const report = await this.repo
+      .createQueryBuilder('report')
+      .leftJoinAndSelect('report.user', 'user')
+      .where('report.userId = :userId', {
+        userId: req.currentUser.id,
+      })
+      .getMany();
+    return report;
   }
 
   create(reportDto: CreateReportDto, user: User) {
